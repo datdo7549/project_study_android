@@ -3,7 +3,10 @@ package com.example.projectstudy;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.util.Log;
+
+import com.example.projectstudy.car.Car;
+import com.example.projectstudy.dagger.CarComponent;
+import com.example.projectstudy.dagger.DaggerCarComponent;
 
 import javax.inject.Inject;
 

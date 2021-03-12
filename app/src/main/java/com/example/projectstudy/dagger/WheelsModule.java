@@ -1,4 +1,8 @@
-package com.example.projectstudy;
+package com.example.projectstudy.dagger;
+
+import com.example.projectstudy.car.Rims;
+import com.example.projectstudy.car.Tires;
+import com.example.projectstudy.car.Wheels;
 
 import dagger.Module;
 import dagger.Provides;

@@ -1,6 +1,4 @@
-package com.example.projectstudy;
-
-import javax.inject.Inject;
+package com.example.projectstudy.car;
 
 public class Wheels {
     //We don't own this class so we can't annotate it with @Inject
