@@ -1,0 +1,2 @@
+
+The application has beautiful UI, it is very easy to use. User can easy to insert property data and store it to Phone database. User also upload image of property. The app is built using cordova framework, so it is very fast, because the entire source code of the application is written only in html, css and javascript. The application only use two plugin to save data and select image from phone so the process of building app will be very fast. The command to build or run app is very simple.
