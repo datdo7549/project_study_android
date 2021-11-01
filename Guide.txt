@@ -1,0 +1,8 @@
+*** Install cordova: npm install -g cordova 
+** Setup environment
+
+1. Add plugin camera: cordova plugin add cordova-plugin-camera
+2. Add plugin web database: cordova plugin add cordova-sqlite-storage
+3. Add plugin selectpr: cordova plugin add cordova-wheel-selector-plugin
+4. Prepare project: cordova prepare android
+5. Run app on device: cordova run android 
