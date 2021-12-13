@@ -1,0 +1,181 @@
+Index: app/src/main/java/com/norae/spotlight/login/SignUpActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/norae/spotlight/login/SignUpActivity.java b/app/src/main/java/com/norae/spotlight/login/SignUpActivity.java
+--- a/app/src/main/java/com/norae/spotlight/login/SignUpActivity.java	(revision bca381da5abc8f870617a9539d46cb470961510e)
++++ b/app/src/main/java/com/norae/spotlight/login/SignUpActivity.java	(date 1639361702626)
+@@ -20,10 +20,13 @@
+ import com.amazonaws.mobile.auth.core.signin.SignInProviderResultHandler;
+ import com.norae.spotlight.MainActivity;
+ import com.norae.spotlight.R;
++import com.norae.spotlight.SocialLogin;
+ import com.norae.spotlight.bus.BusEvent;
+ import com.norae.spotlight.bus.RxBus;
+ import com.norae.spotlight.settings.PrivacyPolicy;
+ import com.norae.spotlight.songs.search.ProgressDialogFragment;
++import com.norae.spotlight.ui.featureddetail.DanceChallengeFragment;
++import com.norae.spotlight.utils.IntentSenderUtils;
+ 
+ import io.reactivex.disposables.Disposable;
+ import io.reactivex.functions.Consumer;
+@@ -37,6 +40,8 @@
+     private Disposable mSubscription;
+     DialogFragment mProgressViewFragment;
+ 
++    private boolean isFromChallengeFragment = false;
++
+     private class SignUpProviderResultHandlerImpl implements SignInProviderResultHandler {
+         /**
+          * Receives the successful sign-in result and starts the main activity.
+@@ -95,6 +100,7 @@
+     public void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_signup_new);
++        isFromChallengeFragment = getIntent() != null && getIntent().getExtras() != null && getIntent().getExtras().getString("start_activity", "").equals(SocialLogin.class.toString());
+ //        final TextInputEditText usernameInput = findViewById(R.id.input_username);
+         EditText usernameInput = findViewById(R.id.input_username);
+         usernameInput.addTextChangedListener(new TextWatcher() {
+@@ -137,9 +143,13 @@
+         findViewById(R.id.link_to_sign_in).setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+-                // Finish the registration screen and return to the Login activity
+-                Intent signinIntent = new Intent(activityContext, SignInActivity.class);
+-                startActivity(signinIntent);
++                if (isFromChallengeFragment) {
++                    IntentSenderUtils.startSignInActivity(SignUpActivity.this, SignUpActivity.class.toString());
++                } else {
++                    // Finish the registration screen and return to the Login activity
++                    Intent signinIntent = new Intent(activityContext, SignInActivity.class);
++                    startActivity(signinIntent);
++                }
+                 finish();
+             }
+         });
+Index: app/src/main/java/com/norae/spotlight/login/SignInActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/norae/spotlight/login/SignInActivity.java b/app/src/main/java/com/norae/spotlight/login/SignInActivity.java
+--- a/app/src/main/java/com/norae/spotlight/login/SignInActivity.java	(revision bca381da5abc8f870617a9539d46cb470961510e)
++++ b/app/src/main/java/com/norae/spotlight/login/SignInActivity.java	(date 1639361702637)
+@@ -17,6 +17,7 @@
+ import com.amazonaws.mobile.auth.core.signin.SignInProviderResultHandler;
+ import com.norae.spotlight.MainActivity;
+ import com.norae.spotlight.R;
++import com.norae.spotlight.SocialLogin;
+ import com.norae.spotlight.bus.BusEvent;
+ import com.norae.spotlight.bus.RxBus;
+ import com.norae.spotlight.songs.search.ProgressDialogFragment;
+@@ -35,6 +36,7 @@
+     DialogFragment mProgressViewFragment;
+     private CompositeDisposable mSubscription;
+ 
++    private boolean isFromChallengeFragment = false;
+ 
+     private class SignInProviderResultHandlerImpl implements SignInProviderResultHandler {
+         /**
+@@ -47,9 +49,11 @@
+             Log.i(LOG_TAG, "Signin succeeded");
+             mProgressViewFragment.dismiss();
+ 
+-            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+-            startActivity(intent);
++            if (!isFromChallengeFragment) {
++                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
++                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
++                startActivity(intent);
++            }
+             finish();
+         }
+ 
+@@ -84,6 +88,9 @@
+     public void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_sign_in);
++
++        isFromChallengeFragment = getIntent() != null && getIntent().getExtras() != null && getIntent().getExtras().getString("start_activity", "").equals(SignUpActivity.class.toString());
++
+         mSubscription = new CompositeDisposable();
+ 
+         mSigninButton = findViewById(R.id.btn_signin);
+Index: app/src/main/java/com/norae/spotlight/SocialLogin.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/norae/spotlight/SocialLogin.java b/app/src/main/java/com/norae/spotlight/SocialLogin.java
+--- a/app/src/main/java/com/norae/spotlight/SocialLogin.java	(revision bca381da5abc8f870617a9539d46cb470961510e)
++++ b/app/src/main/java/com/norae/spotlight/SocialLogin.java	(date 1639361702678)
+@@ -42,6 +42,7 @@
+ import com.norae.spotlight.ui.featureddetail.DanceChallengeFragment;
+ import com.norae.spotlight.users.User;
+ import com.norae.spotlight.users.UserId;
++import com.norae.spotlight.utils.IntentSenderUtils;
+ import com.norae.spotlight.utils.SharedPreferenceUtils;
+ 
+ import amazonaws.mobile.util.ViewHelper;
+@@ -106,9 +107,14 @@
+                 finish();
+                 break;
+             case R.id.bt_loginEmail: {
+-                Intent intent = new Intent(context, SignUpActivity.class);
+-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+-                startActivity(intent);
++                if (isFromChallengeFragment) {
++                    IntentSenderUtils.startSignUpActivity(SocialLogin.this, SocialLogin.class.toString());
++                    finish();
++                } else {
++                    Intent intent = new Intent(context, SignUpActivity.class);
++                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
++                    startActivity(intent);
++                }
+                 break;
+             }
+             case R.id.bt_loginFacebook:
+Index: app/src/main/java/com/norae/spotlight/utils/IntentSenderUtils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/norae/spotlight/utils/IntentSenderUtils.java b/app/src/main/java/com/norae/spotlight/utils/IntentSenderUtils.java
+--- a/app/src/main/java/com/norae/spotlight/utils/IntentSenderUtils.java	(revision bca381da5abc8f870617a9539d46cb470961510e)
++++ b/app/src/main/java/com/norae/spotlight/utils/IntentSenderUtils.java	(date 1639361702672)
+@@ -5,6 +5,8 @@
+ import android.os.Bundle;
+ 
+ import com.norae.spotlight.SocialLogin;
++import com.norae.spotlight.login.SignInActivity;
++import com.norae.spotlight.login.SignUpActivity;
+ 
+ public class IntentSenderUtils {
+     public static int DANCE_CHALLENGE_REQUEST_CODE = 1001;
+@@ -18,4 +20,24 @@
+             activity.startActivityForResult(intent, DANCE_CHALLENGE_REQUEST_CODE);
+         }
+     }
++
++    public static void startSignUpActivity(Activity activity, String TAG) {
++        if (activity != null) {
++            Bundle bundle = new Bundle();
++            bundle.putString("start_activity", TAG);
++            Intent intent = new Intent(activity, SignUpActivity.class);
++            intent.putExtras(bundle);
++            activity.startActivityForResult(intent, DANCE_CHALLENGE_REQUEST_CODE);
++        }
++    }
++
++    public static void startSignInActivity(Activity activity, String TAG) {
++        if (activity != null) {
++            Bundle bundle = new Bundle();
++            bundle.putString("start_activity", TAG);
++            Intent intent = new Intent(activity, SignInActivity.class);
++            intent.putExtras(bundle);
++            activity.startActivityForResult(intent, DANCE_CHALLENGE_REQUEST_CODE);
++        }
++    }
+ }
